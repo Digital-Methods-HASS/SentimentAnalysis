@@ -1,6 +1,7 @@
 # Cultural Data Science (Winter 2020) - Week 11
 
 ### Text mining, sentiment analysis, and visualization
+In this tutorial you learn how to extract text out of well-formed (digital-born) PDF files and apply tidyverse/tidytext tools to do a bit of text-mining, before learning the basics of sentiment analysis. We will practice with the IPCC (International Panel on Climate Change) Special Report on Climate Change. What sentiments do you expect to find in this sort of document?
 
 ### Resources:
 
