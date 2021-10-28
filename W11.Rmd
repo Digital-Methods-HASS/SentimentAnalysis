@@ -337,5 +337,9 @@ conf
 
 There are serious limitations of sentiment analysis using existing lexicons, and you should **think really hard** about your findings and if a lexicon makes sense for your study. Otherwise, word counts and exploration alone can be useful! 
 
+## Your task
+
+Taking this script as a point of departure, apply sentiment analysis on the Game of Thrones. You will find a pdf in the data folder. What are the most common meaningful words and what emotions do you expect will dominate this volume? Are there any terms that are similarly ambiguous to the 'confidence' above? 
+
 ### Credits: 
 This tutorial is inspired by Allison Horst's Advanced Statistics and Data Analysis.
