@@ -32,7 +32,9 @@ library(ggwordcloud)
 ### Get the IPCC report:
 ```{r}
 ipcc_path <- here("data","ipcc_gw_15.pdf")
+help <- here("data", "FVH_1888-1895A-K.pdf")
 ipcc_text <- pdf_text(ipcc_path)
+help_text <- pdf_text(help)
 ```
 
 Some things to notice:
@@ -45,6 +47,9 @@ Example: Just want to get text from a single page (e.g. Page 9)?
 ```{r}
 ipcc_p9 <- ipcc_text[9]
 ipcc_p9
+
+help3 <- help_text[3]
+help3
 ```
 
 See how that compares to the text in the PDF on Page 9. What has pdftools added, and where?
