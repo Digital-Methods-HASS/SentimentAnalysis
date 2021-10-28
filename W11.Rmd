@@ -1,6 +1,6 @@
 ---
 title: 'Text mining, sentiment analysis, and visualization'
-date: "22 November 2020"
+date: 'created on 22 November 2020 and updated `r format(Sys.time(), "%d %B, %Y")`'
 output: html_document
 ---
 
@@ -30,29 +30,24 @@ library(ggwordcloud)
 **Note:** for more text analysis, you can fork & work through Casey O’Hara and Jessica Couture’s eco-data-sci workshop (available here https://github.com/oharac/text_workshop)
 
 ### Get the IPCC report:
-```{r}
+```{r get-document}
 ipcc_path <- here("data","ipcc_gw_15.pdf")
-help <- here("data", "FVH_1888-1895A-K.pdf")
 ipcc_text <- pdf_text(ipcc_path)
-help_text <- pdf_text(help)
 ```
 
 Some things to notice:
 
-- How cool!
+- How cool to extract text out of a PDF! Do you think it will work with any PDF?
 - Each row is a page of the PDF (i.e., this is a vector of strings, one for each page)
-- Only sees text that is "selectable"
+- The pdf_text() function only sees text that is "selectable"
 
 Example: Just want to get text from a single page (e.g. Page 9)? 
-```{r}
+```{r single-page}
 ipcc_p9 <- ipcc_text[9]
 ipcc_p9
-
-help3 <- help_text[3]
-help3
 ```
 
-See how that compares to the text in the PDF on Page 9. What has pdftools added, and where?
+See how that compares to the text in the PDF on Page 9. What has pdftools added and where?
 
 From Jessica and Casey's text mining workshop: “pdf_text() returns a vector of strings, one for each page of the pdf. So we can mess with it in tidyverse style, let’s turn it into a dataframe, and keep track of the pages. Then we can use stringr::str_split() to break the pages up into individual lines. Each line of the pdf is concluded with a backslash-n, so split on this. We will also add a line number in addition to the page number."
 
@@ -62,24 +57,26 @@ From Jessica and Casey's text mining workshop: “pdf_text() returns a vector of
 - Unnest into regular columns using `tidyr::unnest()`
 - Remove leading/trailing white space with `stringr::str_trim()`
 
-```{r}
+```{r split-lines}
 ipcc_df <- data.frame(ipcc_text) %>% 
   mutate(text_full = str_split(ipcc_text, pattern = '\\n')) %>% 
   unnest(text_full) %>% 
   mutate(text_full = str_trim(text_full)) 
 
 # Why '\\n' instead of '\n'? Because some symbols (e.g. \, *) need to be called literally with a starting \ to escape the regular expression. For example, \\a for a string actually contains \a. So the string that represents the regular expression '\n' is actually '\\n'.
+# Although, this time round, it is working for me with \n alone. Wonders never cease.
 
 # More information: https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html
+
 ```
 
-Now each line, on each page, is it's own row, with extra starting & trailing spaces removed. 
+Now each line, on each page, is its own row, with extra starting & trailing spaces removed. 
 
-### Get the tokens (words) in tidy format
+### Get the tokens (individual words) in tidy format
 
 Use `tidytext::unnest_tokens()` (which pulls from the `tokenizer`) package, to split columns into tokens. We are interested in *words*, so that's the token we'll use:
 
-```{r}
+```{r tokenize}
 ipcc_tokens <- ipcc_df %>% 
   unnest_tokens(word, text_full)
 
@@ -88,34 +85,35 @@ ipcc_tokens <- ipcc_df %>%
 ```
 
 Let's count the words!
-```{r}
+```{r count-words}
 ipcc_wc <- ipcc_tokens %>% 
   count(word) %>% 
   arrange(-n)
+ipcc_wc
 ```
 
-OK...so we notice that there are a whole bunch of things show up frequently that we might not be interested in ("a", "the", "and", etc.). These are called *stop words*. Let's remove them. 
+OK...so we notice that a whole bunch of things show up frequently that we might not be interested in ("a", "the", "and", etc.). These are called *stop words*. Let's remove them. 
 
 ### Remove stop words:
 
 See `?stop_words` and `View(stop_words)`to look at documentation for stop words lexicons.
 
 We will *remove* stop words using `tidyr::anti_join()`:
-```{r}
+```{r stopwords}
 ipcc_stop <- ipcc_tokens %>% 
   anti_join(stop_words) %>% 
   select(-ipcc_text)
 ```
 
 Now check the counts again: 
-```{r}
+```{r count-words2}
 ipcc_swc <- ipcc_stop %>% 
   count(word) %>% 
   arrange(-n)
 ```
 
 What if we want to get rid of all the numbers (non-text) in `ipcc_stop`?
-```{r}
+```{r skip-numbers}
 # This code will filter out numbers by asking:
 # If you convert to as.numeric, is it NA (meaning those words)?
 # If it IS NA (is.na), then keep it (so all words are kept)
@@ -129,7 +127,7 @@ ipcc_no_numeric <- ipcc_stop %>%
 
 See more: https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html
 
-```{r}
+```{r wordcloud-prep}
 # There are almost 2000 unique words 
 length(unique(ipcc_no_numeric$word))
 
@@ -140,7 +138,7 @@ ipcc_top100 <- ipcc_no_numeric %>%
   head(100)
 ```
 
-```{r}
+```{r wordcloud}
 ipcc_cloud <- ggplot(data = ipcc_top100, aes(label = word)) +
   geom_text_wordcloud() +
   theme_minimal()
@@ -149,7 +147,7 @@ ipcc_cloud
 ```
 
 That's underwhelming. Let's customize it a bit:
-```{r}
+```{r wordcloud-pro}
 ggplot(data = ipcc_top100, aes(label = word, size = n)) +
   geom_text_wordcloud_area(aes(color = n), shape = "diamond") +
   scale_size_area(max_size = 12) +
@@ -169,14 +167,14 @@ First, check out the ‘sentiments’ lexicon. From Julia Silge and David Robins
   -  bing from Bing Liu and collaborators, and
   -  nrc from Saif Mohammad and Peter Turney
 
-All three of these lexicons are based on unigrams, i.e., single words. These lexicons contain many English words and the words are assigned scores for positive/negative sentiment, and also possibly emotions like joy, anger, sadness, and so forth. The nrc lexicon categorizes words in a binary fashion (“yes”/“no”) into categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust. The bing lexicon categorizes words in a binary fashion into positive and negative categories. The AFINN lexicon assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment. All of this information is tabulated in the sentiments dataset, and tidytext provides a function get_sentiments() to get specific sentiment lexicons without the columns that are not used in that lexicon."
+All three of these lexicons are based on unigrams, i.e., single words. These lexicons contain many English words and the words are assigned scores for positive/negative sentiment, and also possibly emotions like joy, anger, sadness, and so forth. The AFINN lexicon assigns words with a score that runs between -5 and 5, with negative scores indicating negative sentiment and positive scores indicating positive sentiment.  The bing lexicon categorizes words in a binary fashion into positive and negative categories. The nrc lexicon categorizes words in a binary fashion (“yes”/“no”) into categories of positive, negative, anger, anticipation, disgust, fear, joy, sadness, surprise, and trust.  All of this information is tabulated in the sentiments dataset, and tidytext provides a function get_sentiments() to get specific sentiment lexicons without the columns that are not used in that lexicon."
 
-Let's explore the sentiment lexicons. "bing" included, other lexicons ("afinn", "nrc", "loughran") you'll be prompted to download.
+Let's explore the sentiment lexicons. "bing" is included, other lexicons ("afinn", "nrc", "loughran") you'll be prompted to download.
 
 **WARNING:** These collections include very offensive words. I urge you to not look at them in class.
 
 "afinn": Words ranked from -5 (very negative) to +5 (very positive)
-```{r}
+```{r afinn}
 get_sentiments(lexicon = "afinn")
 # Note: may be prompted to download (yes)
 
@@ -189,7 +187,7 @@ afinn_pos
 ```
 
 bing: binary, "positive" or "negative"
-```{r}
+```{r bing}
 get_sentiments(lexicon = "bing")
 ```
 
@@ -199,21 +197,23 @@ Includes bins for 8 emotions (anger, anticipation, disgust, fear, joy, sadness, 
 **Citation for NRC lexicon**: Crowdsourcing a Word-Emotion Association Lexicon, Saif Mohammad and Peter Turney, Computational Intelligence, 29 (3), 436-465, 2013.
 
 Now nrc:
-```{r}
+```{r nrc}
 get_sentiments(lexicon = "nrc")
 ```
 
 Let's do sentiment analysis on the IPCC text data using afinn, and nrc. 
+
+
 ### Sentiment analysis with afinn: 
 
 First, bind words in `ipcc_stop` to `afinn` lexicon:
-```{r}
+```{r bind-afinn}
 ipcc_afinn <- ipcc_stop %>% 
   inner_join(get_sentiments("afinn"))
 ```
 
 Let's find some counts (by sentiment ranking):
-```{r}
+```{r count-afinn}
 ipcc_afinn_hist <- ipcc_afinn %>% 
   count(value)
 
@@ -223,13 +223,13 @@ ggplot(data = ipcc_afinn_hist, aes(x = value, y = n)) +
 ```
 
 Investigate some of the words in a bit more depth:
-```{r}
+```{r afinn-2}
 # What are these '2' words?
 ipcc_afinn2 <- ipcc_afinn %>% 
   filter(value == 2)
 ```
 
-```{r}
+```{r afinn-2-more}
 # Check the unique 2-score words:
 unique(ipcc_afinn2$word)
 
@@ -237,6 +237,7 @@ unique(ipcc_afinn2$word)
 ipcc_afinn2_n <- ipcc_afinn2 %>% 
   count(word, sort = TRUE) %>% 
   mutate(word = fct_reorder(factor(word), n))
+
 
 ggplot(data = ipcc_afinn2_n, aes(x = word, y = n)) +
   geom_col() +
@@ -250,7 +251,7 @@ Look back at the IPCC report, and search for "confidence." Is it typically assoc
 We learn something important from this example: Just using a sentiment lexicon to match words will not differentiate between different uses of the word...(ML can start figuring it out with context, but we won't do that here).
 
 Or we can summarize sentiment for the report: 
-```{r}
+```{r summarize-afinn}
 ipcc_summary <- ipcc_afinn %>% 
   summarize(
     mean_score = mean(value),
@@ -264,14 +265,14 @@ The mean and median indicate *slightly* positive overall sentiments based on the
 
 We can use the NRC lexicon to start "binning" text by the feelings they're typically associated with. As above, we'll use inner_join() to combine the IPCC non-stopword text with the nrc lexicon: 
 
-```{r}
+```{r bind-bing}
 ipcc_nrc <- ipcc_stop %>% 
   inner_join(get_sentiments("nrc"))
 ```
 
 Wait, won't that exclude some of the words in our text? YES! We should check which are excluded using `anti_join()`:
 
-```{r}
+```{r check-exclusions}
 ipcc_exclude <- ipcc_stop %>% 
   anti_join(get_sentiments("nrc"))
 
@@ -284,10 +285,10 @@ ipcc_exclude_n <- ipcc_exclude %>%
 head(ipcc_exclude_n)
 ```
 
-Lesson: always check which words are EXCLUDED in sentiment analysis using a pre-built lexicon! 
+**Lesson: always check which words are EXCLUDED in sentiment analysis using a pre-built lexicon! **
 
 Now find some counts: 
-```{r}
+```{r count-bing}
 ipcc_nrc_n <- ipcc_nrc %>% 
   count(sentiment, sort = TRUE)
 
@@ -298,7 +299,7 @@ ggplot(data = ipcc_nrc_n, aes(x = sentiment, y = n)) +
 ```
 
 Or count by sentiment *and* word, then facet:
-```{r}
+```{r count-nrc}
 ipcc_nrc_n5 <- ipcc_nrc %>% 
   count(word,sentiment, sort = TRUE) %>% 
   group_by(sentiment) %>% 
@@ -324,7 +325,7 @@ ggsave(plot = ipcc_nrc_gg,
 ```
 
 Wait, so "confidence" is showing up in NRC lexicon as "fear"? Let's check:
-```{r}
+```{r nrc-confidence}
 conf <- get_sentiments(lexicon = "nrc") %>% 
   filter(word == "confidence")
 
