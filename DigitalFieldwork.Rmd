@@ -1,9 +1,9 @@
 ---
-title: 'Text mining, sentiment analysis, and visualization'
-date: 'created on 22 November 2020 and updated `r format(Sys.time(), "%d %B, %Y")`'
+title: "Catharsis or Hygge? The Sentiment of Field Data Capture"
+author: "Adela Sobotkova"
+date: "26/11/2021"
 output: html_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
                       warning = FALSE,
@@ -29,10 +29,16 @@ library(ggwordcloud)
 
 **Note:** for more text analysis, you can fork & work through Casey O’Hara and Jessica Couture’s eco-data-sci workshop (available here https://github.com/oharac/text_workshop)
 
-### Get the IPCC report:
+### Get the Game of Thrones text:
 ```{r get-document}
-ipcc_path <- here("data","ipcc_gw_15.pdf")
-ipcc_text <- pdf_text(ipcc_path)
+idig <- pdf_text('data/Boyd2021_OpenAreaOpenDataARAP.pdf')
+idig_df <- data.frame(text = idig) %>%
+  mutate(page = 1:n()) 
+
+main_text <- idig_df %>% 
+  filter(page %in% 1:20) %>%
+  mutate(text = str_split(text, '\n')) %>%
+  unnest(text)
 ```
 
 Some things to notice:
@@ -43,8 +49,8 @@ Some things to notice:
 
 Example: Just want to get text from a single page (e.g. Page 9)? 
 ```{r single-page}
-ipcc_p9 <- ipcc_text[9]
-ipcc_p9
+idig_p9 <- idig[9]
+idig_p9
 ```
 
 See how that compares to the text in the PDF on Page 9. What has pdftools added and where?
@@ -58,13 +64,12 @@ From Jessica and Casey's text mining workshop: “pdf_text() returns a vector of
 - Remove leading/trailing white space with `stringr::str_trim()`
 
 ```{r split-lines}
-ipcc_df <- data.frame(ipcc_text) %>% 
-  mutate(text_full = str_split(ipcc_text, pattern = '\\n')) %>% 
+idig_df <- data.frame(idig) %>% 
+  mutate(text_full = str_split(idig, pattern = '\n')) %>% 
   unnest(text_full) %>% 
   mutate(text_full = str_trim(text_full)) 
 
 # Why '\\n' instead of '\n'? Because some symbols (e.g. \, *) need to be called literally with a starting \ to escape the regular expression. For example, \\a for a string actually contains \a. So the string that represents the regular expression '\n' is actually '\\n'.
-# Although, this time round, it is working for me with \n alone. Wonders never cease.
 
 # More information: https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html
 
@@ -77,19 +82,19 @@ Now each line, on each page, is its own row, with extra starting & trailing spac
 Use `tidytext::unnest_tokens()` (which pulls from the `tokenizer`) package, to split columns into tokens. We are interested in *words*, so that's the token we'll use:
 
 ```{r tokenize}
-ipcc_tokens <- ipcc_df %>% 
+idig_tokens <- idig_df %>% 
   unnest_tokens(word, text_full)
 
-# See how this differs from `ipcc_df`
+# See how this differs from `idig_df`
 # Each word has its own row!
 ```
 
 Let's count the words!
 ```{r count-words}
-ipcc_wc <- ipcc_tokens %>% 
+idig_wc <- idig_tokens %>% 
   count(word) %>% 
   arrange(-n)
-ipcc_wc
+idig_wc
 ```
 
 OK...so we notice that a whole bunch of things show up frequently that we might not be interested in ("a", "the", "and", etc.). These are called *stop words*. Let's remove them. 
@@ -100,56 +105,57 @@ See `?stop_words` and `View(stop_words)`to look at documentation for stop words 
 
 We will *remove* stop words using `tidyr::anti_join()`:
 ```{r stopwords}
-ipcc_stop <- ipcc_tokens %>% 
+idig_stop <- idig_tokens %>% 
   anti_join(stop_words) %>% 
-  select(-ipcc_text)
+  select(-idig)
 ```
 
 Now check the counts again: 
 ```{r count-words2}
-ipcc_swc <- ipcc_stop %>% 
+idig_swc <- idig_stop %>% 
   count(word) %>% 
   arrange(-n)
+idig_swc
 ```
 
-What if we want to get rid of all the numbers (non-text) in `ipcc_stop`?
+What if we want to get rid of all the numbers (non-text) in `idig_stop`?
 ```{r skip-numbers}
 # This code will filter out numbers by asking:
 # If you convert to as.numeric, is it NA (meaning those words)?
 # If it IS NA (is.na), then keep it (so all words are kept)
 # Anything that is converted to a number is removed
 
-ipcc_no_numeric <- ipcc_stop %>% 
+idig_no_numeric <- idig_stop %>% 
   filter(is.na(as.numeric(word)))
 ```
 
-### A word cloud of IPCC report words (non-numeric)
+### A word cloud of idig report words (non-numeric)
 
 See more: https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html
 
 ```{r wordcloud-prep}
 # There are almost 2000 unique words 
-length(unique(ipcc_no_numeric$word))
+length(unique(idig_no_numeric$word))
 
 # We probably don't want to include them all in a word cloud. Let's filter to only include the top 100 most frequent?
-ipcc_top100 <- ipcc_no_numeric %>% 
+idig_top100 <- idig_no_numeric %>% 
   count(word) %>% 
   arrange(-n) %>% 
   head(100)
 ```
 
 ```{r wordcloud}
-ipcc_cloud <- ggplot(data = ipcc_top100, aes(label = word)) +
+idig_cloud <- ggplot(data = idig_top100, aes(label = word)) +
   geom_text_wordcloud() +
   theme_minimal()
 
-ipcc_cloud
+idig_cloud
 ```
 
 That's underwhelming. Let's customize it a bit:
 ```{r wordcloud-pro}
-ggplot(data = ipcc_top100, aes(label = word, size = n)) +
-  geom_text_wordcloud_area(aes(color = n), shape = "star") +
+ggplot(data = idig_top100, aes(label = word, size = n)) +
+  geom_text_wordcloud_area(aes(color = n), shape = "diamond") +
   scale_size_area(max_size = 12) +
   scale_color_gradientn(colors = c("darkgreen","blue","red")) +
   theme_minimal()
@@ -201,58 +207,59 @@ Now nrc:
 get_sentiments(lexicon = "nrc")
 ```
 
-Let's do sentiment analysis on the IPCC text data using afinn, and nrc. 
+Let's do sentiment analysis on the idig text data using afinn, and nrc. 
 
 
 ### Sentiment analysis with afinn: 
 
-First, bind words in `ipcc_stop` to `afinn` lexicon:
+First, bind words in `idig_stop` to `afinn` lexicon:
 ```{r bind-afinn}
-ipcc_afinn <- ipcc_stop %>% 
+idig_afinn <- idig_stop %>% 
   inner_join(get_sentiments("afinn"))
 ```
 
 Let's find some counts (by sentiment ranking):
 ```{r count-afinn}
-ipcc_afinn_hist <- ipcc_afinn %>% 
+idig_afinn_hist <- idig_afinn %>% 
   count(value)
 
 # Plot them: 
-ggplot(data = ipcc_afinn_hist, aes(x = value, y = n)) +
+ggplot(data = idig_afinn_hist, aes(x = value, y = n)) +
   geom_col()
 ```
 
 Investigate some of the words in a bit more depth:
 ```{r afinn-2}
-# What are these '2' words?
-ipcc_afinn2 <- ipcc_afinn %>% 
-  filter(value == 2)
+# What are these '-2' words?
+idig_afinn2 <- idig_afinn %>% 
+  filter(value == -2) %>% 
+  head(50)
 ```
 
 ```{r afinn-2-more}
 # Check the unique 2-score words:
-unique(ipcc_afinn2$word)
+unique(idig_afinn2$word)
 
 # Count & plot them
-ipcc_afinn2_n <- ipcc_afinn2 %>% 
+idig_afinn2_n <- idig_afinn2 %>% 
   count(word, sort = TRUE) %>% 
   mutate(word = fct_reorder(factor(word), n))
 
 
-ggplot(data = ipcc_afinn2_n, aes(x = word, y = n)) +
+ggplot(data = idig_afinn2_n, aes(x = word, y = n)) +
   geom_col() +
   coord_flip()
 
-# OK so what's the deal with confidence? And is it really "positive" in the emotion sense? 
+# OK most of these are pretty clear. Can you find any ambiguous terms? 
 ```
 
-Look back at the IPCC report, and search for "confidence." Is it typically associated with emotion, or something else? 
+Look back at the Boyd text, and search for "XXXXX". Is it typically associated with emotion, or something else? 
 
 We learn something important from this example: Just using a sentiment lexicon to match words will not differentiate between different uses of the word...(ML can start figuring it out with context, but we won't do that here).
 
 Or we can summarize sentiment for the report: 
 ```{r summarize-afinn}
-ipcc_summary <- ipcc_afinn %>% 
+idig_summary <- idig_afinn %>% 
   summarize(
     mean_score = mean(value),
     median_score = median(value)
@@ -263,50 +270,50 @@ The mean and median indicate *slightly* positive overall sentiments based on the
 
 ### NRC lexicon for sentiment analysis
 
-We can use the NRC lexicon to start "binning" text by the feelings they're typically associated with. As above, we'll use inner_join() to combine the IPCC non-stopword text with the nrc lexicon: 
+We can use the NRC lexicon to start "binning" text by the feelings they're typically associated with. As above, we'll use inner_join() to combine the idig non-stopword text with the nrc lexicon: 
 
 ```{r bind-bing}
-ipcc_nrc <- ipcc_stop %>% 
+idig_nrc <- idig_stop %>% 
   inner_join(get_sentiments("nrc"))
 ```
 
 Wait, won't that exclude some of the words in our text? YES! We should check which are excluded using `anti_join()`:
 
 ```{r check-exclusions}
-ipcc_exclude <- ipcc_stop %>% 
+idig_exclude <- idig_stop %>% 
   anti_join(get_sentiments("nrc"))
 
-# View(ipcc_exclude)
+# View(idig_exclude)
 
 # Count to find the most excluded:
-ipcc_exclude_n <- ipcc_exclude %>% 
+idig_exclude_n <- idig_exclude %>% 
   count(word, sort = TRUE)
 
-head(ipcc_exclude_n)
+head(idig_exclude_n)
 ```
 
 **Lesson: always check which words are EXCLUDED in sentiment analysis using a pre-built lexicon! **
 
 Now find some counts: 
 ```{r count-bing}
-ipcc_nrc_n <- ipcc_nrc %>% 
+idig_nrc_n <- idig_nrc %>% 
   count(sentiment, sort = TRUE)
 
 # And plot them:
 
-ggplot(data = ipcc_nrc_n, aes(x = sentiment, y = n)) +
+ggplot(data = idig_nrc_n, aes(x = sentiment, y = n)) +
   geom_col()
 ```
 
 Or count by sentiment *and* word, then facet:
 ```{r count-nrc}
-ipcc_nrc_n5 <- ipcc_nrc %>% 
+idig_nrc_n5 <- idig_nrc %>% 
   count(word,sentiment, sort = TRUE) %>% 
   group_by(sentiment) %>% 
   top_n(5) %>% 
   ungroup()
 
-ipcc_nrc_gg <- ggplot(data = ipcc_nrc_n5, aes(x = reorder(word,n), y = n, fill = sentiment)) +
+idig_nrc_gg <- ggplot(data = idig_nrc_n5, aes(x = reorder(word,n), y = n, fill = sentiment)) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~sentiment, ncol = 2, scales = "free") +
   coord_flip() +
@@ -314,32 +321,28 @@ ipcc_nrc_gg <- ggplot(data = ipcc_nrc_n5, aes(x = reorder(word,n), y = n, fill =
   labs(x = "Word", y = "count")
 
 # Show it
-ipcc_nrc_gg
+idig_nrc_gg
 
 # Save it
-ggsave(plot = ipcc_nrc_gg, 
-       here("figures","ipcc_nrc_sentiment.png"), 
+ggsave(plot = idig_nrc_gg, 
+       here("figures","idig_nrc_sentiment.png"), 
        height = 8, 
        width = 5)
 
 ```
 
-Wait, so "confidence" is showing up in NRC lexicon as "fear"? Let's check:
-```{r nrc-confidence}
-conf <- get_sentiments(lexicon = "nrc") %>% 
-  filter(word == "confidence")
+Wait, so "excavation" is showing up in NRC lexicon as "negative" and "surprise" and "anticipation"? Let's check:
+```{r nrc-lord}
+dig <- get_sentiments(lexicon = "nrc") %>% 
+  filter(word == "excavation")
 
 # Yep, check it out:
-conf
+dig
 ```
 
 ## Big picture takeaway
 
 There are serious limitations of sentiment analysis using existing lexicons, and you should **think really hard** about your findings and if a lexicon makes sense for your study. Otherwise, word counts and exploration alone can be useful! 
-
-## Your task
-
-Taking this script as a point of departure, apply sentiment analysis on the Game of Thrones. You will find a pdf in the data folder. What are the most common meaningful words and what emotions do you expect will dominate this volume? Are there any terms that are similarly ambiguous to the 'confidence' above? 
 
 ### Credits: 
 This tutorial is inspired by Allison Horst's Advanced Statistics and Data Analysis.

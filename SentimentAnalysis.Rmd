@@ -59,7 +59,7 @@ From Jessica and Casey's text mining workshop: “pdf_text() returns a vector of
 
 ```{r split-lines}
 ipcc_df <- data.frame(ipcc_text) %>% 
-  mutate(text_full = str_split(ipcc_text, pattern = '\\n')) %>% 
+  mutate(text_full = str_split(ipcc_text, pattern = '\n')) %>% 
   unnest(text_full) %>% 
   mutate(text_full = str_trim(text_full)) 
 
@@ -79,6 +79,7 @@ Use `tidytext::unnest_tokens()` (which pulls from the `tokenizer`) package, to s
 ```{r tokenize}
 ipcc_tokens <- ipcc_df %>% 
   unnest_tokens(word, text_full)
+ipcc_tokens
 
 # See how this differs from `ipcc_df`
 # Each word has its own row!

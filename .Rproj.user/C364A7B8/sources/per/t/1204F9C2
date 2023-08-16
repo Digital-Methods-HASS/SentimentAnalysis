@@ -1,24 +1,26 @@
 {
     "id": "1204F9C2",
-    "path": "~/Documents/RStudio/1_Teaching/TextMining/CDS_W11/W11.Rmd",
+    "path": "~/Documents/RStudio/1_Teaching/SentimentAnalysis/W11.Rmd",
     "project_path": "W11.Rmd",
     "type": "r_markdown",
-    "hash": "1902369105",
+    "hash": "162853667",
     "contents": "",
     "dirty": false,
     "created": 1606047572932.0,
     "source_on_save": false,
     "relative_order": 2,
     "properties": {
-        "cursorPosition": "331,126",
-        "scrollLine": "328"
+        "cursorPosition": "41,12",
+        "scrollLine": "28",
+        "Source": "Source",
+        "last_setup_crc32": ""
     },
     "folds": "",
-    "lastKnownWriteTime": 1606047741,
+    "lastKnownWriteTime": 1637962271,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1606047741317,
+    "last_content_update": 1637962271374,
     "read_only": false,
     "read_only_alternatives": []
 }

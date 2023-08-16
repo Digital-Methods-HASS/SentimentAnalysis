@@ -1,0 +1,31 @@
+---
+title: "Sentida"
+author: "Adela Sobotkova"
+date: "2022-11-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document expands the IPCC sentiment analysis with a Danish implementation of Sentida package. It requires the same packages as IPCC plus the Danish-specific resources. In short, run W11 first, then this script. 
+
+## Load the Sentida package
+
+```{r}
+if(!require("devtools")) install.packages("devtools")
+
+devtools::install_github("Guscode/Sentida")
+
+library(Sentida)
+```
+
+Now that we have the toolkit, locate a suitable Danish dataset. 
+Let's see about the Stiften subset
+
+```{r}
+text <- pdf_text("C:/Users/adela/Documents/Professional/Articles/Newest/2013_Book_AppliedSpatialDataAnalysisWith.pdf")
+# text <- read_table("path")
+```
+
