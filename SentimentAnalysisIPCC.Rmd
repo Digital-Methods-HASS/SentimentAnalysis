@@ -220,7 +220,8 @@ ipcc_afinn_hist <- ipcc_afinn %>%
 
 # Plot them: 
 ggplot(data = ipcc_afinn_hist, aes(x = value, y = n)) +
-  geom_col()
+  geom_col(aes(fill = value)) +
+  theme_bw()
 ```
 
 Investigate some of the words in a bit more depth:
@@ -242,7 +243,8 @@ ipcc_afinn2_n <- ipcc_afinn2 %>%
 
 ggplot(data = ipcc_afinn2_n, aes(x = word, y = n)) +
   geom_col() +
-  coord_flip()
+  coord_flip() +
+  theme_bw()
 
 # OK so what's the deal with confidence? And is it really "positive" in the emotion sense? 
 ```
@@ -296,7 +298,8 @@ ipcc_nrc_n <- ipcc_nrc %>%
 # And plot them:
 
 ggplot(data = ipcc_nrc_n, aes(x = sentiment, y = n)) +
-  geom_col()
+  geom_col(aes(fill = sentiment))+
+  theme_bw()
 ```
 
 Or count by sentiment *and* word, then facet:

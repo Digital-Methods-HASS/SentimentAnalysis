@@ -25,7 +25,6 @@ Now that we have the toolkit, locate a suitable Danish dataset.
 Let's see about the Stiften subset
 
 ```{r}
-text <- pdf_text("C:/Users/adela/Documents/Professional/Articles/Newest/2013_Book_AppliedSpatialDataAnalysisWith.pdf")
-# text <- read_table("path")
+
 ```
 
