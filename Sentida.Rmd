@@ -1,7 +1,7 @@
 ---
 title: "Sentida"
 author: "Adela Sobotkova"
-date: "2022-11-08"
+date: "2025-3-15"
 output: html_document
 ---
 
@@ -22,9 +22,50 @@ library(Sentida)
 ```
 
 Now that we have the toolkit, locate a suitable Danish dataset. 
-Let's see about the Stiften subset
+Let's see about the mediastream subset
+
+
+## Load Danish stopwords
+
+See `?stop_words` and `View(stop_words)`to look at documentation for stop words lexicons.
+For Danish stopwords, see here:  
+https://raw.githubusercontent.com/stopwords-iso/stopwords-da/refs/heads/master/stopwords-da.txt
+
+```{r}
+dk_stopwords <- read.csv("https://raw.githubusercontent.com/stopwords-iso/stopwords-da/refs/heads/master/stopwords-da.txt", header = FALSE)
+
+new_stopwords <- data_frame(word = c("þÿ", "paa", "a", "be", "cf", "r", "t", "saa", "1", "kr", "m", "f", "al", "maa", "al", "ogsaa", "uden", "mød", "v", "r", "e", "n", "ca", "pa", "re", "reg"))
+
+dk_stopwords <- dk_stopwords %>% 
+  rename(word = V1) %>% 
+  rbind(new_stopwords)
+```
+
 
 ```{r}
 
-```
+# random cross checking 
+sentida("Jeg er blevet mere eventyrlysten.", output = "total")
 
+sentida("Udvidet horisonter Ting man fandt ekstreme og unormale er med tiden blevet mere normaliseret", output = "mean") 
+
+
+# Analyzing sentiment for each word separately
+sentida("Udvidet", output = "mean")        # Sentiment for "Udvidet"
+sentida("horisonter", output = "mean")     # Sentiment for "horisonter"
+sentida("Ting", output = "mean")           # Sentiment for "Ting"
+sentida("man", output = "mean")            # Sentiment for "man"
+sentida("fandt", output = "mean")          # Sentiment for "fandt"
+sentida("ekstreme", output = "mean")       # Sentiment for "ekstreme"
+sentida("og", output = "mean")             # Sentiment for "og"
+sentida("unormale", output = "mean")       # Sentiment for "unormale"
+sentida("er", output = "mean")             # Sentiment for "er"
+sentida("med", output = "mean")            # Sentiment for "med"
+sentida("tiden", output = "mean")          # Sentiment for "tiden"
+sentida("blevet", output = "mean")         # Sentiment for "blevet"
+sentida("mere", output = "mean")           # Sentiment for "mere"
+sentida("normaliseret", output = "mean")   # Sentiment for "normaliseret"
+
+sentida(iconv("Udvidet horisonter Ting man før fandt ekstreme og unormale er med tiden blevet mere normaliseret","latin1", "UTF-8") , output = "total") 
+
+```
