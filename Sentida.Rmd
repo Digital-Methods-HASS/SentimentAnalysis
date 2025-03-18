@@ -66,6 +66,7 @@ sentida("blevet", output = "mean")         # Sentiment for "blevet"
 sentida("mere", output = "mean")           # Sentiment for "mere"
 sentida("normaliseret", output = "mean")   # Sentiment for "normaliseret"
 
+# Getting around special characters
 sentida(iconv("Udvidet horisonter Ting man før fandt ekstreme og unormale er med tiden blevet mere normaliseret","latin1", "UTF-8") , output = "total") 
 
 ```

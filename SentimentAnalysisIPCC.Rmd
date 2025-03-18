@@ -13,18 +13,11 @@ library(tidyverse)
 library(here)
 
 # For text mining:
+
 library(pdftools)
 library(tidytext)
 library(textdata) 
 library(ggwordcloud)
-
-# Note - Before lab:
-# Attach tidytext and textdata packages
-# Run: get_sentiments(lexicon = "nrc")
-# Should be prompted to install lexicon - choose yes!
-# Run: get_sentiments(lexicon = "afinn")
-# Should be prompted to install lexicon - choose yes!
-
 ```
 
 **Note:** for more text analysis, you can fork & work through Casey O’Hara and Jessica Couture’s eco-data-sci workshop (available here https://github.com/oharac/text_workshop)
@@ -63,11 +56,7 @@ ipcc_df <- data.frame(ipcc_text) %>%
   unnest(text_full) %>% 
   mutate(text_full = str_trim(text_full)) 
 
-# Why '\\n' instead of '\n'? Because some symbols (e.g. \, *) need to be called literally with a starting \ to escape the regular expression. For example, \\a for a string actually contains \a. So the string that represents the regular expression '\n' is actually '\\n'.
-# Although, this time round, it is working for me with \n alone. Wonders never cease.
-
 # More information: https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html
-
 ```
 
 Now each line, on each page, is its own row, with extra starting & trailing spaces removed. 
@@ -79,7 +68,6 @@ Use `tidytext::unnest_tokens()` (which pulls from the `tokenizer`) package, to s
 ```{r tokenize}
 ipcc_tokens <- ipcc_df %>% 
   unnest_tokens(word, text_full)
-ipcc_tokens
 
 # See how this differs from `ipcc_df`
 # Each word has its own row!
@@ -137,6 +125,7 @@ ipcc_top100 <- ipcc_no_numeric %>%
   count(word) %>% 
   arrange(-n) %>% 
   head(100)
+ipcc_top100
 ```
 
 ```{r wordcloud}
@@ -150,7 +139,7 @@ ipcc_cloud
 That's underwhelming. Let's customize it a bit:
 ```{r wordcloud-pro}
 ggplot(data = ipcc_top100, aes(label = word, size = n)) +
-  geom_text_wordcloud_area(aes(color = n), shape = "diamond") +
+  geom_text_wordcloud_area(aes(color = n), shape = "star") +
   scale_size_area(max_size = 12) +
   scale_color_gradientn(colors = c("darkgreen","blue","red")) +
   theme_minimal()
@@ -177,7 +166,8 @@ Let's explore the sentiment lexicons. "bing" is included, other lexicons ("afinn
 "afinn": Words ranked from -5 (very negative) to +5 (very positive)
 ```{r afinn}
 get_sentiments(lexicon = "afinn")
-# Note: may be prompted to download (yes)
+# You should be prompted to install lexicon - choose yes!
+
 
 # Let's look at the pretty positive words:
 afinn_pos <- get_sentiments("afinn") %>% 
@@ -190,6 +180,8 @@ afinn_pos
 bing: binary, "positive" or "negative"
 ```{r bing}
 get_sentiments(lexicon = "bing")
+# You should be prompted to install lexicon - choose yes!
+
 ```
 
 nrc:https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm
@@ -200,6 +192,8 @@ Includes bins for 8 emotions (anger, anticipation, disgust, fear, joy, sadness, 
 Now nrc:
 ```{r nrc}
 get_sentiments(lexicon = "nrc")
+# You should be prompted to install lexicon - choose yes!
+
 ```
 
 Let's do sentiment analysis on the IPCC text data using afinn, and nrc. 
@@ -211,6 +205,7 @@ First, bind words in `ipcc_stop` to `afinn` lexicon:
 ```{r bind-afinn}
 ipcc_afinn <- ipcc_stop %>% 
   inner_join(get_sentiments("afinn"))
+ipcc_afinn
 ```
 
 Let's find some counts (by sentiment ranking):
@@ -260,6 +255,7 @@ ipcc_summary <- ipcc_afinn %>%
     mean_score = mean(value),
     median_score = median(value)
   )
+ipcc_summary 
 ```
 
 The mean and median indicate *slightly* positive overall sentiments based on the AFINN lexicon. 
