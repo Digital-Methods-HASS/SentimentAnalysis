@@ -1,6 +1,12 @@
 # Cultural Data Science: Text mining, sentiment analysis, and visualization
 In this tutorial you learn how to extract text out of well-formed (digital-born) PDF files and apply tidyverse/tidytext tools to do a bit of text-mining, before learning the basics of sentiment analysis. We will practice with the IPCC (International Panel on Climate Change) Special Report on Climate Change. What sentiments do you expect to find in this sort of document?
 
+### License
+
+Creative Commons Attribution 4.0 International
+This license requires that reusers give credit to the creator. It allows reusers to distribute, remix, adapt, and build upon the material in any medium or format, even for commercial purposes
+
+
 ### Resources:
 
 - Julia Silge and David Robinson's [Text Mining with R](https://www.tidytextmining.com/)
